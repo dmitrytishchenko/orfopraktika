@@ -1,0 +1,13 @@
+tests/screenshots/
+__pycache__/
+*.jks
+*.keystore
+android/.gradle/
+android/build/
+android/app/build/
+android/app/src/main/assets/
+android/local.properties
+orfopraktika-signing-key/
+password.txt
+*.jks.base64
+.idea/

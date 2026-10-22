@@ -1,0 +1,56 @@
+plugins {
+    id 'com.android.application'
+}
+
+// Номер сборки приходит из GitHub Actions; при локальной сборке — 1.
+def buildNumber = (System.getenv('VERSION_CODE') ?: '1').toInteger()
+def keystorePath = System.getenv('ORFO_KEYSTORE')
+
+// Тренажёр — это index.html из корня репозитория. Копируем его в assets при каждой сборке,
+// чтобы в приложении всегда была та же версия, что и на сайте (копия в git не хранится).
+copy {
+    from rootProject.file('../index.html')
+    into 'src/main/assets'
+}
+
+android {
+    namespace 'ru.orfopraktika.app'
+    compileSdk 35
+
+    defaultConfig {
+        applicationId 'ru.orfopraktika.app'
+        minSdk 24
+        targetSdk 34
+        versionCode buildNumber
+        versionName "1.0.${buildNumber}"
+    }
+
+    signingConfigs {
+        release {
+            if (keystorePath) {
+                storeFile file(keystorePath)
+                storePassword System.getenv('ORFO_KEYSTORE_PASSWORD')
+                keyAlias System.getenv('ORFO_KEY_ALIAS') ?: 'orfopraktika'
+                keyPassword System.getenv('ORFO_KEYSTORE_PASSWORD')
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            // Без своего ключа APK подписывается отладочным: ставится, но обновить его поверх нельзя.
+            signingConfig keystorePath ? signingConfigs.release : signingConfigs.debug
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    lint {
+        checkReleaseBuilds = false
+        abortOnError = false
+    }
+}

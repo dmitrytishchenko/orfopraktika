@@ -1,0 +1,16 @@
+{
+  "name": "ОрфоПрактика — тренажёр орфографии",
+  "short_name": "ОрфоПрактика",
+  "description": "Тренажёр орфографии для 5 класса: правила, упражнения, мини-диктант и интервальное повторение.",
+  "lang": "ru",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f4f5ef",
+  "theme_color": "#176a58",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

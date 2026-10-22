@@ -1,0 +1,68 @@
+name: android-apk
+
+# Собирает APK из index.html и публикует его в Releases как «apk-latest».
+# Постоянная ссылка на скачивание:
+#   https://github.com/<владелец>/<репозиторий>/releases/latest/download/OrfoPraktika.apk
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'index.html'
+      - 'android/**'
+      - '.github/workflows/android.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.11.1'
+
+      - name: Ключ подписи
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ORFO_KEYSTORE_BASE64 }}
+        run: |
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/orfopraktika.jks"
+            echo "ORFO_KEYSTORE=$RUNNER_TEMP/orfopraktika.jks" >> "$GITHUB_ENV"
+          else
+            echo "::warning::Секрет ORFO_KEYSTORE_BASE64 не задан: APK подписан отладочным ключом, следующую версию нельзя будет поставить поверх."
+          fi
+
+      - name: Сборка APK
+        working-directory: android
+        env:
+          ORFO_KEYSTORE_PASSWORD: ${{ secrets.ORFO_KEYSTORE_PASSWORD }}
+          VERSION_CODE: ${{ github.run_number }}
+        run: gradle assembleRelease --no-daemon --stacktrace
+
+      - name: Файл APK
+        run: cp android/app/build/outputs/apk/release/app-release.apk OrfoPraktika.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: OrfoPraktika-apk
+          path: OrfoPraktika.apk
+
+      - name: Публикация в Releases
+        if: github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete apk-latest --yes --cleanup-tag || true
+          gh release create apk-latest OrfoPraktika.apk \
+            --title "ОрфоПрактика для Android, сборка ${{ github.run_number }}" \
+            --notes "Скачайте OrfoPraktika.apk на телефон и откройте его. Если Android спросит, разрешите установку из этого источника. Приложение работает без интернета; ответы хранятся только на телефоне." \
+            --latest
